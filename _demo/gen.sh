@@ -8,4 +8,6 @@ do
     N=`expr $N + 1`
 done
 
+mktemp $dir/.XXXX
+mktemp $dir/.XXXX
 

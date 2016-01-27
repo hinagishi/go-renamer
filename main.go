@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -21,36 +22,74 @@ func renameAll(f string) {
 		fmt.Println(err)
 		return
 	}
-	i := 0
+	oldfiles := make([]string, len(files))
 	newfiles := make([]string, len(files))
-	for p, n := range files {
-		if n.Name()[0] == '.' {
-			newfiles[p] = n.Name()
-		} else if strings.Index(n.Name(), ".") == -1 {
-			newfiles[p] = fmt.Sprintf("%03d", i)
-			i++
-		} else {
-			tmp := strings.Split(n.Name(), ".")
-			suffix := tmp[len(tmp)-1]
-			newfiles[p] = fmt.Sprintf("%03d.%s", i, suffix)
-			i++
-		}
+	for i := 0; i < len(files); i++ {
+		oldfiles[i] = files[i].Name()
 	}
 
-	for i := 0; i < len(newfiles); i++ {
-		fmt.Println(files[i].Name() + " --> " + newfiles[i])
+	setName(oldfiles, newfiles, 0)
+
+	for {
+		showChangeList(oldfiles, newfiles)
+		fmt.Print("Really change files name or modify?(y/n/m): ")
+		reader := bufio.NewReader(os.Stdin)
+		c, err := reader.ReadByte()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		if c == 'y' {
+			for i := 0; i < len(newfiles); i++ {
+				os.Rename(f+files[i].Name(), f+newfiles[i])
+			}
+			break
+		} else if c == 'm' {
+			modifyName(oldfiles, newfiles)
+		} else {
+			break
+		}
 	}
-	fmt.Print("Really change files name?(y/n): ")
+}
+
+func modifyName(oldfiles, newfiles []string) {
+	fmt.Print("Input modify number -->")
 	reader := bufio.NewReader(os.Stdin)
-	c, err := reader.ReadByte()
+	c, _, err := reader.ReadLine()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	if c == 'y' {
-		for i := 0; i < len(newfiles); i++ {
-			os.Rename(f+files[i].Name(), f+newfiles[i])
+	num, err := strconv.Atoi(string(c))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Print("Input new file name -->")
+	c, _, err = reader.ReadLine()
+	newfiles[num] = string(c)
+}
+
+func setName(oldfiles, newfiles []string, start int) {
+	index := 0
+	for i := start; i < len(oldfiles); i++ {
+		if oldfiles[i][0] == '.' {
+			newfiles[i] = oldfiles[i]
+		} else if strings.Index(oldfiles[i], ".") == -1 {
+			newfiles[i] = fmt.Sprintf("%03d", index)
+			index++
+		} else {
+			tmp := strings.Split(oldfiles[i], ".")
+			suffix := tmp[len(tmp)-1]
+			newfiles[i] = fmt.Sprintf("%03d.%s", index, suffix)
+			index++
 		}
+	}
+}
+
+func showChangeList(oldfiles, newfiles []string) {
+	for i := 0; i < len(newfiles); i++ {
+		fmt.Println(strconv.Itoa(i) + ": " + oldfiles[i] + " --> " + newfiles[i])
 	}
 }
 
