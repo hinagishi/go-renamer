@@ -9,6 +9,12 @@ import (
 	"strings"
 )
 
+type FileName struct {
+	Oldname string
+	Newname string
+	Modify  bool
+}
+
 func usage() {
 	fmt.Println("Usage: go-renamer filepath")
 }
@@ -22,16 +28,15 @@ func renameAll(f string) {
 		fmt.Println(err)
 		return
 	}
-	oldfiles := make([]string, len(files))
-	newfiles := make([]string, len(files))
+	filename := make([]FileName, len(files))
 	for i := 0; i < len(files); i++ {
-		oldfiles[i] = files[i].Name()
+		filename[i] = FileName{Oldname: files[i].Name(), Newname: "", Modify: false}
 	}
 
-	setName(oldfiles, newfiles, 0)
+	setName(filename, 0)
 
 	for {
-		showChangeList(oldfiles, newfiles)
+		showChangeList(filename)
 		fmt.Print("Really change files name or modify?(y/n/m): ")
 		reader := bufio.NewReader(os.Stdin)
 		c, err := reader.ReadByte()
@@ -40,19 +45,20 @@ func renameAll(f string) {
 			return
 		}
 		if c == 'y' {
-			for i := 0; i < len(newfiles); i++ {
-				os.Rename(f+files[i].Name(), f+newfiles[i])
+			for i := 0; i < len(filename); i++ {
+				os.Rename(f+filename[i].Oldname, f+filename[i].Newname)
 			}
 			break
 		} else if c == 'm' {
-			modifyName(oldfiles, newfiles)
+			modifyName(filename)
+			setName(filename, 0)
 		} else {
 			break
 		}
 	}
 }
 
-func modifyName(oldfiles, newfiles []string) {
+func modifyName(filename []FileName) {
 	fmt.Print("Input modify number -->")
 	reader := bufio.NewReader(os.Stdin)
 	c, _, err := reader.ReadLine()
@@ -67,29 +73,48 @@ func modifyName(oldfiles, newfiles []string) {
 	}
 	fmt.Print("Input new file name -->")
 	c, _, err = reader.ReadLine()
-	newfiles[num] = string(c)
+	if checkName(filename, string(c)) {
+		fmt.Println("Already exists the same name file")
+		return
+	}
+	filename[num].Newname = string(c)
+	filename[num].Modify = true
 }
 
-func setName(oldfiles, newfiles []string, start int) {
+func checkName(filename []FileName, f string) bool {
+	for _, fn := range filename {
+		if fn.Newname == f {
+			return true
+		}
+	}
+	return false
+}
+
+func setName(filename []FileName, start int) {
 	index := 0
-	for i := start; i < len(oldfiles); i++ {
-		if oldfiles[i][0] == '.' {
-			newfiles[i] = oldfiles[i]
-		} else if strings.Index(oldfiles[i], ".") == -1 {
-			newfiles[i] = fmt.Sprintf("%03d", index)
+	for i := start; i < len(filename); i++ {
+		if filename[i].Modify {
+			continue
+		}
+		if filename[i].Oldname[0] == '.' {
+			filename[i].Newname = filename[i].Oldname
+		} else if strings.Index(filename[i].Oldname, ".") == -1 {
+			tmp := fmt.Sprintf("%03d", index)
+			filename[i].Newname = tmp
 			index++
 		} else {
-			tmp := strings.Split(oldfiles[i], ".")
+			tmp := strings.Split(filename[i].Oldname, ".")
 			suffix := tmp[len(tmp)-1]
-			newfiles[i] = fmt.Sprintf("%03d.%s", index, suffix)
+			fname := fmt.Sprintf("%03d.%s", index, suffix)
+			filename[i].Newname = fname
 			index++
 		}
 	}
 }
 
-func showChangeList(oldfiles, newfiles []string) {
-	for i := 0; i < len(newfiles); i++ {
-		fmt.Println(strconv.Itoa(i) + ": " + oldfiles[i] + " --> " + newfiles[i])
+func showChangeList(filename []FileName) {
+	for i := 0; i < len(filename); i++ {
+		fmt.Println(strconv.Itoa(i) + ": " + filename[i].Oldname + " --> " + filename[i].Newname)
 	}
 }
 
