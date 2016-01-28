@@ -28,9 +28,11 @@ func renameAll(f string) {
 		fmt.Println(err)
 		return
 	}
-	filename := make([]FileName, len(files))
+	filename := make([]FileName, 0)
 	for i := 0; i < len(files); i++ {
-		filename[i] = FileName{Oldname: files[i].Name(), Newname: "", Modify: false}
+		if !files[i].IsDir() {
+			filename = append(filename, FileName{Oldname: files[i].Name(), Newname: "", Modify: false})
+		}
 	}
 
 	setName(filename, 0)
