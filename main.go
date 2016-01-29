@@ -76,7 +76,7 @@ func modifyName(filename []FileName) {
 	fmt.Print("Input new file name -->")
 	c, _, err = reader.ReadLine()
 	if checkName(filename, string(c)) {
-		fmt.Println("Already exists the same name file")
+		fmt.Printf("\x1b[31m%s\x1b[0m\n", "Already exists the same name file")
 		return
 	}
 	filename[num].Newname = string(c)
@@ -115,9 +115,11 @@ func setName(filename []FileName, start int) {
 }
 
 func showChangeList(filename []FileName) {
+	fmt.Print("\n")
 	for i := 0; i < len(filename); i++ {
 		fmt.Println(strconv.Itoa(i) + ": " + filename[i].Oldname + " --> " + filename[i].Newname)
 	}
+	fmt.Print("\n")
 }
 
 func main() {
