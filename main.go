@@ -1,3 +1,9 @@
+/*
+go-renamer is a tool to rename file.
+It renames a file to a specified file name if the target is a file.
+It also renames all files in a specified directory.
+	Author: hinagishi
+*/
 package main
 
 import (
@@ -9,6 +15,10 @@ import (
 	"strings"
 )
 
+/*
+FileName contains an old file name, a new file
+and a modified flag.
+*/
 type FileName struct {
 	Oldname string
 	Newname string
@@ -28,7 +38,7 @@ func renameAll(f string) {
 		fmt.Println(err)
 		return
 	}
-	filename := make([]FileName, 0)
+	var filename []FileName
 	for i := 0; i < len(files); i++ {
 		if !files[i].IsDir() {
 			filename = append(filename, FileName{Oldname: files[i].Name(), Newname: "", Modify: false})
