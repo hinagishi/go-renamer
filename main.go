@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -155,7 +156,8 @@ func main() {
 				fmt.Print(f.Name() + "--> ")
 				continue
 			}
-			os.Rename(os.Args[1], nf)
+			path := filepath.Dir(os.Args[1])
+			os.Rename(os.Args[1], path+"/"+nf)
 			break
 		}
 	}
