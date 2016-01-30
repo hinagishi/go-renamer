@@ -26,6 +26,15 @@ type FileName struct {
 	Modify  bool
 }
 
+/*
+Options contains commandline-argments
+*/
+type Options struct {
+	Trim   string
+	Suffix string
+	Append string
+}
+
 func usage() {
 	fmt.Println("Usage: go-renamer filepath")
 }
@@ -139,26 +148,52 @@ func main() {
 		os.Exit(1)
 	}
 
-	f, err := os.Stat(os.Args[1])
+	var opt Options
+	var target string
+	fmt.Println(os.Args)
+	for i := 1; i < len(os.Args); i++ {
+		if os.Args[i] == "-t" {
+			if i+1 >= len(os.Args) {
+				usage()
+				return
+			} else {
+				opt.Trim = os.Args[i+1]
+				i++
+			}
+		} else {
+			target = os.Args[i]
+		}
+	}
+	if target == "" {
+		usage()
+		return
+	}
+	f, err := os.Stat(target)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
 	if f.IsDir() {
-		renameAll(os.Args[1])
+		renameAll(target)
 	} else {
-		scanner := bufio.NewScanner(os.Stdin)
-		fmt.Print(f.Name() + "--> ")
-		for scanner.Scan() {
-			nf := scanner.Text()
-			if nf == "" {
-				fmt.Print(f.Name() + "--> ")
-				continue
+		path := filepath.Dir(target)
+		if opt.Trim != "" {
+			base := strings.Trim(filepath.Base(target), opt.Trim)
+			os.Rename(target, path+"/"+base)
+		} else {
+			scanner := bufio.NewScanner(os.Stdin)
+			fmt.Print(f.Name() + "--> ")
+			for scanner.Scan() {
+				nf := scanner.Text()
+				if nf == "" {
+					fmt.Print(f.Name() + "--> ")
+					continue
+				}
+				path := filepath.Dir(target)
+				os.Rename(target, path+"/"+nf)
+				break
 			}
-			path := filepath.Dir(os.Args[1])
-			os.Rename(os.Args[1], path+"/"+nf)
-			break
 		}
 	}
 }
