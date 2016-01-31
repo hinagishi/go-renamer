@@ -32,7 +32,7 @@ Options contains commandline-argments
 type Options struct {
 	Trim   string
 	Suffix string
-	Append string
+	Prefix string
 }
 
 func usage() {
@@ -160,6 +160,14 @@ func main() {
 				opt.Trim = os.Args[i+1]
 				i++
 			}
+		} else if os.Args[i] == "-s" {
+			if i+1 >= len(os.Args) {
+				usage()
+				return
+			} else {
+				opt.Suffix = os.Args[i+1]
+				i++
+			}
 		} else {
 			target = os.Args[i]
 		}
@@ -181,6 +189,8 @@ func main() {
 		if opt.Trim != "" {
 			base := strings.Trim(filepath.Base(target), opt.Trim)
 			os.Rename(target, path+"/"+base)
+		} else if opt.Suffix != "" {
+			os.Rename(target, target+opt.Suffix)
 		} else {
 			scanner := bufio.NewScanner(os.Stdin)
 			fmt.Print(f.Name() + "--> ")
