@@ -35,6 +35,10 @@ type Options struct {
 	Prefix string
 }
 
+func (opt *Options) isEmpty() bool {
+	return opt.Trim == "" && opt.Suffix == "" && opt.Prefix == ""
+}
+
 func usage() {
 	fmt.Println("Usage: go-renamer filepath")
 }
@@ -150,7 +154,6 @@ func main() {
 
 	var opt Options
 	var target string
-	fmt.Println(os.Args)
 	for i := 1; i < len(os.Args); i++ {
 		if os.Args[i] == "-t" {
 			if i+1 >= len(os.Args) {
@@ -166,6 +169,14 @@ func main() {
 				return
 			} else {
 				opt.Suffix = os.Args[i+1]
+				i++
+			}
+		} else if os.Args[i] == "-p" {
+			if i+1 >= len(os.Args) {
+				usage()
+				return
+			} else {
+				opt.Prefix = os.Args[i+1]
 				i++
 			}
 		} else {
@@ -186,12 +197,7 @@ func main() {
 		renameAll(target)
 	} else {
 		path := filepath.Dir(target)
-		if opt.Trim != "" {
-			base := strings.Trim(filepath.Base(target), opt.Trim)
-			os.Rename(target, path+"/"+base)
-		} else if opt.Suffix != "" {
-			os.Rename(target, target+opt.Suffix)
-		} else {
+		if opt.isEmpty() {
 			scanner := bufio.NewScanner(os.Stdin)
 			fmt.Print(f.Name() + "--> ")
 			for scanner.Scan() {
@@ -204,6 +210,13 @@ func main() {
 				os.Rename(target, path+"/"+nf)
 				break
 			}
+
 		}
+		base := filepath.Base(target)
+		base = strings.Trim(base, opt.Trim)
+		base += opt.Suffix
+		base = opt.Prefix + base
+		os.Rename(target, path+"/"+base)
+
 	}
 }
