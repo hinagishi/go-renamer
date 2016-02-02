@@ -43,7 +43,7 @@ func usage() {
 	fmt.Println("Usage: go-renamer filepath")
 }
 
-func renameAll(f string) {
+func renameAll(f string, opt Options) {
 	if !strings.HasSuffix(f, "/") {
 		f += "/"
 	}
@@ -59,7 +59,7 @@ func renameAll(f string) {
 		}
 	}
 
-	setName(filename, 0)
+	setName(filename, opt)
 
 	for {
 		showChangeList(filename)
@@ -77,7 +77,7 @@ func renameAll(f string) {
 			break
 		} else if c == 'm' {
 			modifyName(filename)
-			setName(filename, 0)
+			setName(filename, opt)
 		} else {
 			break
 		}
@@ -116,9 +116,9 @@ func checkName(filename []FileName, f string) bool {
 	return false
 }
 
-func setName(filename []FileName, start int) {
+func setName(filename []FileName, opt Options) {
 	index := 0
-	for i := start; i < len(filename); i++ {
+	for i := 0; i < len(filename); i++ {
 		if filename[i].Modify {
 			continue
 		}
@@ -127,6 +127,13 @@ func setName(filename []FileName, start int) {
 		} else if strings.Index(filename[i].Oldname, ".") == -1 {
 			tmp := fmt.Sprintf("%03d", index)
 			filename[i].Newname = tmp
+			index++
+		} else if !opt.isEmpty() {
+			base := filepath.Base(filename[i].Oldname)
+			base = strings.Trim(base, opt.Trim)
+			base += opt.Suffix
+			base = opt.Prefix + base
+			filename[i].Newname = base
 			index++
 		} else {
 			tmp := strings.Split(filename[i].Oldname, ".")
@@ -194,7 +201,7 @@ func main() {
 	}
 
 	if f.IsDir() {
-		renameAll(target)
+		renameAll(target, opt)
 	} else {
 		path := filepath.Dir(target)
 		if opt.isEmpty() {
