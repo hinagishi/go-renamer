@@ -160,7 +160,7 @@ func main() {
 	}
 
 	var opt Options
-	var target string
+	var target []string
 	for i := 1; i < len(os.Args); i++ {
 		if os.Args[i] == "-t" {
 			if i+1 >= len(os.Args) {
@@ -187,43 +187,46 @@ func main() {
 				i++
 			}
 		} else {
-			target = os.Args[i]
+			target = append(target, os.Args[i])
 		}
 	}
-	if target == "" {
+	if len(target) == 0 {
 		usage()
 		return
 	}
-	f, err := os.Stat(target)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
 
-	if f.IsDir() {
-		renameAll(target, opt)
-	} else {
-		path := filepath.Dir(target)
-		if opt.isEmpty() {
-			scanner := bufio.NewScanner(os.Stdin)
-			fmt.Print(f.Name() + "--> ")
-			for scanner.Scan() {
-				nf := scanner.Text()
-				if nf == "" {
-					fmt.Print(f.Name() + "--> ")
-					continue
+	for _, t := range target {
+		f, err := os.Stat(t)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		if f.IsDir() && len(target) == 1 {
+			renameAll(t, opt)
+		} else {
+			path := filepath.Dir(t)
+			if opt.isEmpty() {
+				scanner := bufio.NewScanner(os.Stdin)
+				fmt.Print(f.Name() + "--> ")
+				for scanner.Scan() {
+					nf := scanner.Text()
+					if nf == "" {
+						fmt.Print(f.Name() + "--> ")
+						continue
+					}
+					os.Rename(t, path+"/"+nf)
+					break
 				}
-				path := filepath.Dir(target)
-				os.Rename(target, path+"/"+nf)
-				break
+
 			}
 
-		}
-		base := filepath.Base(target)
-		base = strings.Trim(base, opt.Trim)
-		base += opt.Suffix
-		base = opt.Prefix + base
-		os.Rename(target, path+"/"+base)
+			base := filepath.Base(t)
+			base = strings.Trim(base, opt.Trim)
+			base += opt.Suffix
+			base = opt.Prefix + base
+			os.Rename(t, path+"/"+base)
 
+		}
 	}
 }
